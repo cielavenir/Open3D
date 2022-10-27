@@ -26,7 +26,7 @@
 
 #include "open3d/io/rpc/BufferConnection.h"
 
-#include <zmq.hpp>
+#include "zmq.hpp"
 
 #include "open3d/io/rpc/Messages.h"
 #include "open3d/utility/Logging.h"

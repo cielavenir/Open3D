@@ -26,7 +26,7 @@
 
 #include "open3d/io/rpc/DummyReceiver.h"
 
-#include <zmq.hpp>
+#include "zmq.hpp"
 
 #include "open3d/io/rpc/DummyMessageProcessor.h"
 #include "open3d/io/rpc/Messages.h"

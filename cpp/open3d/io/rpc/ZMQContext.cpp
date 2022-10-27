@@ -27,7 +27,7 @@
 #include "open3d/io/rpc/ZMQContext.h"
 
 #include <mutex>
-#include <zmq.hpp>
+#include "zmq.hpp"
 namespace {
 std::shared_ptr<zmq::context_t> context_ptr;
 std::mutex context_ptr_mutex;

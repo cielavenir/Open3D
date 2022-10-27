@@ -26,7 +26,7 @@
 
 #include "open3d/io/rpc/ZMQReceiver.h"
 
-#include <zmq.hpp>
+#include "zmq.hpp"
 
 #include "open3d/io/rpc/MessageProcessorBase.h"
 #include "open3d/io/rpc/Messages.h"
