@@ -11,7 +11,7 @@ file(MAKE_DIRECTORY ${PYTHON_PACKAGE_DST_DIR}/open3d)
 # 3) Configured files and supporting files
 
 # 1) Pure-python code and misc files, copied from ${PYTHON_PACKAGE_SRC_DIR}
-file(COPY ${PYTHON_PACKAGE_SRC_DIR}/
+file(COPY ${PYTHON_PACKAGE_SRC_DIR}/open3d
      DESTINATION ${PYTHON_PACKAGE_DST_DIR}
 )
 
@@ -42,8 +42,8 @@ foreach(PYTHON_EXTRA_LIB ${PYTHON_EXTRA_LIBRARIES})
 endforeach()
 
 # 3) Configured files and supporting files
-configure_file("${PYTHON_PACKAGE_SRC_DIR}/setup.py"
-               "${PYTHON_PACKAGE_DST_DIR}/setup.py")
+# configure_file("${PYTHON_PACKAGE_SRC_DIR}/setup.py"
+#                "${PYTHON_PACKAGE_DST_DIR}/setup.py")
 configure_file("${PYTHON_PACKAGE_SRC_DIR}/open3d/__init__.py"
                "${PYTHON_PACKAGE_DST_DIR}/open3d/__init__.py")
 configure_file("${PYTHON_PACKAGE_SRC_DIR}/tools/cli.py"
@@ -60,12 +60,12 @@ configure_file("${PYTHON_PACKAGE_SRC_DIR}/open3d/visualization/rendering/__init_
                "${PYTHON_PACKAGE_DST_DIR}/open3d/visualization/rendering/__init__.py")
 configure_file("${PYTHON_PACKAGE_SRC_DIR}/open3d/web_visualizer.py"
                "${PYTHON_PACKAGE_DST_DIR}/open3d/web_visualizer.py")
-configure_file("${PYTHON_PACKAGE_SRC_DIR}/js/lib/web_visualizer.js"
-               "${PYTHON_PACKAGE_DST_DIR}/js/lib/web_visualizer.js")
-configure_file("${PYTHON_PACKAGE_SRC_DIR}/js/package.json"
-               "${PYTHON_PACKAGE_DST_DIR}/js/package.json")
-configure_file("${PYTHON_PACKAGE_SRC_DIR}/../cpp/open3d/visualization/webrtc_server/html/webrtcstreamer.js"
-               "${PYTHON_PACKAGE_DST_DIR}/js/lib/webrtcstreamer.js")
+# configure_file("${PYTHON_PACKAGE_SRC_DIR}/js/lib/web_visualizer.js"
+#                "${PYTHON_PACKAGE_DST_DIR}/js/lib/web_visualizer.js")
+# configure_file("${PYTHON_PACKAGE_SRC_DIR}/js/package.json"
+#                "${PYTHON_PACKAGE_DST_DIR}/js/package.json")
+# configure_file("${PYTHON_PACKAGE_SRC_DIR}/../cpp/open3d/visualization/webrtc_server/html/webrtcstreamer.js"
+#                "${PYTHON_PACKAGE_DST_DIR}/js/lib/webrtcstreamer.js")
 file(COPY "${PYTHON_COMPILED_MODULE_DIR}/_build_config.py"
      DESTINATION "${PYTHON_PACKAGE_DST_DIR}/open3d/")
 

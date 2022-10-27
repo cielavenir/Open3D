@@ -73,7 +73,12 @@ endif()
 # 3) Configured files and supporting files
 # Note: `make python-package` clears PYTHON_COMPILED_MODULE_DIR first every time
 set(PYTHON_PACKAGE_SRC_DIR "${PROJECT_SOURCE_DIR}/python")
-set(PYTHON_PACKAGE_DST_DIR "${CMAKE_BINARY_DIR}/lib/python_package")
+#set(PYTHON_PACKAGE_DST_DIR "${CMAKE_BINARY_DIR}/lib/python_package")
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; from os.path import relpath; print(relpath(get_python_lib(1,prefix='${CMAKE_INSTALL_PREFIX}'),'${CMAKE_INSTALL_PREFIX}'))"
+  OUTPUT_VARIABLE PYTHON_PACKAGE_DST_DIR OUTPUT_STRIP_TRAILING_WHITESPACE
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
 message(STATUS "PYPI_PACKAGE_NAME: ${PYPI_PACKAGE_NAME}")
 
 
@@ -203,3 +208,10 @@ add_custom_target(install-python-package
     WORKING_DIRECTORY ${PYTHON_PACKAGE_DST_DIR}
     DEPENDS python-package
 )
+
+add_custom_command(
+    TARGET pybind POST_BUILD
+    COMMAND make python-package
+)
+
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${PYTHON_PACKAGE_DST_DIR}/open3d" DESTINATION "${PYTHON_PACKAGE_DST_DIR}")
