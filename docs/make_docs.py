@@ -1,27 +1,8 @@
 # ----------------------------------------------------------------------------
 # -                        Open3D: www.open3d.org                            -
 # ----------------------------------------------------------------------------
-# The MIT License (MIT)
-#
-# Copyright (c) 2018-2021 www.open3d.org
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
+# Copyright (c) 2018-2023 www.open3d.org
+# SPDX-License-Identifier: MIT
 # ----------------------------------------------------------------------------
 
 # Sphinx makefile with api docs generation
@@ -331,8 +312,6 @@ class PyExampleDocsBuilder:
                       f"\n.. literalinclude:: {example.stem}.py"
                       f"\n   :language: python"
                       f"\n   :linenos:"
-                      f"\n   :lineno-start: 27"
-                      f"\n   :lines: 27-"
                       f"\n\n\n")
 
         with open(output_path / "index.rst", "a") as f:
@@ -411,6 +390,11 @@ class SphinxDocsBuilder:
         build_dir = os.path.join(self.html_output_dir, "html")
         nproc = multiprocessing.cpu_count() if self.parallel else 1
         print(f"Building docs with {nproc} processes")
+        today = os.environ.get("SPHINX_TODAY", None)
+        if today:
+            cmd_args_today = ["-D", "today=" + today]
+        else:
+            cmd_args_today = []
 
         if self.is_release:
             version_list = [
@@ -421,15 +405,10 @@ class SphinxDocsBuilder:
             print("Building docs for release:", release_version)
 
             cmd = [
-                "sphinx-build",
-                "-j",
-                str(nproc),
-                "-b",
-                "html",
-                "-D",
-                "version=" + release_version,
-                "-D",
-                "release=" + release_version,
+                "sphinx-build", "-j",
+                str(nproc), "-b", "html", "-D", "version=" + release_version,
+                "-D", "release=" + release_version
+            ] + cmd_args_today + [
                 ".",
                 build_dir,
             ]
@@ -440,6 +419,7 @@ class SphinxDocsBuilder:
                 str(nproc),
                 "-b",
                 "html",
+            ] + cmd_args_today + [
                 ".",
                 build_dir,
             ]
@@ -505,12 +485,15 @@ class JupyterDocsBuilder:
         # Copy and execute notebooks in the tutorial folder
         nb_paths = []
         nb_direct_copy = [
-            'tensor.ipynb', 'hashmap.ipynb', 't_icp_registration.ipynb',
-            'jupyter_visualization.ipynb'
+            'draw_plotly.ipynb',
+            'hashmap.ipynb',
+            'jupyter_visualization.ipynb',
+            't_icp_registration.ipynb',
+            'tensor.ipynb',
         ]
         example_dirs = [
-            "geometry", "core", "data", "pipelines", "visualization",
-            "t_pipelines"
+            "geometry", "t_geometry", "core", "data", "pipelines",
+            "visualization", "t_pipelines"
         ]
         for example_dir in example_dirs:
             in_dir = (Path(self.current_file_dir) / "jupyter" / example_dir)
@@ -610,6 +593,13 @@ if __name__ == "__main__":
         help="Jupyter notebook execution mode.",
     )
     parser.add_argument(
+        "--delete_notebooks",
+        action="store_true",
+        default=False,
+        help="Delete all *.ipynb files recursively in the output folder. "
+        "This is for CI only, please use with caution.",
+    )
+    parser.add_argument(
         "--py_api_rst",
         default="always",
         choices=("always", "never"),
@@ -679,6 +669,13 @@ if __name__ == "__main__":
         jdb = JupyterDocsBuilder(pwd, args.clean_notebooks,
                                  args.execute_notebooks)
         jdb.run()
+
+    # Remove *.ipynb in the output folder for CI docs.
+    if args.delete_notebooks:
+        print(f"Deleting all *.ipynb files in the {html_output_dir} folder.")
+        for f in Path(html_output_dir).glob("**/*.ipynb"):
+            print(f"Deleting {f}")
+            f.unlink()
 
     # Sphinx is hard-coded to build with the "html" option
     # To customize build, run sphinx-build manually

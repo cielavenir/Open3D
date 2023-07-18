@@ -1,27 +1,8 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// The MIT License (MIT)
-//
-// Copyright (c) 2018-2021 www.open3d.org
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// IN THE SOFTWARE.
+// Copyright (c) 2018-2023 www.open3d.org
+// SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
 #pragma once
@@ -380,14 +361,24 @@ public:
     ///
     /// \param nb_points Number of neighbor points required within the radius.
     /// \param search_radius Radius of the sphere.
-    /// \return tuple of filtered point cloud and boolean mask tensor for
+    /// \return Tuple of filtered point cloud and boolean mask tensor for
     /// selected values w.r.t. input point cloud.
     std::tuple<PointCloud, core::Tensor> RemoveRadiusOutliers(
             size_t nb_points, double search_radius) const;
 
+    /// \brief Remove points that are further away from their \p nb_neighbor
+    /// neighbors in average. This function is not recommended to use on GPU.
+    ///
+    /// \param nb_neighbors Number of neighbors around the target point.
+    /// \param std_ratio Standard deviation ratio.
+    /// \return Tuple of filtered point cloud and boolean mask tensor for
+    /// selected values w.r.t. input point cloud.
+    std::tuple<PointCloud, core::Tensor> RemoveStatisticalOutliers(
+            size_t nb_neighbors, double std_ratio) const;
+
     /// \brief Remove duplicated points and there associated attributes.
     ///
-    /// \return tuple of filtered PointCloud and boolean indexing tensor w.r.t.
+    /// \return Tuple of filtered PointCloud and boolean indexing tensor w.r.t.
     /// input point cloud.
     std::tuple<PointCloud, core::Tensor> RemoveDuplicatedPoints() const;
 
@@ -396,7 +387,7 @@ public:
     ///
     /// \param remove_nan Remove NaN values from the PointCloud.
     /// \param remove_infinite Remove infinite values from the PointCloud.
-    /// \return tuple of filtered point cloud and boolean mask tensor for
+    /// \return Tuple of filtered point cloud and boolean mask tensor for
     /// selected values w.r.t. input point cloud.
     std::tuple<PointCloud, core::Tensor> RemoveNonFinitePoints(
             bool remove_nan = true, bool remove_infinite = true) const;
@@ -488,6 +479,9 @@ public:
             double angle_threshold = 90.0) const;
 
 public:
+    /// Normalize point normals to length 1.
+    PointCloud &NormalizeNormals();
+
     /// \brief Function to estimate point normals. If the point cloud normals
     /// exist, the estimated normals are oriented with respect to the same.
     /// It uses KNN search (Not recommended to use on GPU) if only max_nn
@@ -502,6 +496,31 @@ public:
     void EstimateNormals(
             const utility::optional<int> max_nn = 30,
             const utility::optional<double> radius = utility::nullopt);
+
+    /// \brief Function to orient the normals of a point cloud.
+    ///
+    /// \param orientation_reference Normals are oriented with respect to
+    /// orientation_reference.
+    void OrientNormalsToAlignWithDirection(
+            const core::Tensor &orientation_reference =
+                    core::Tensor::Init<float>({0, 0, 1},
+                                              core::Device("CPU:0")));
+
+    /// \brief Function to orient the normals of a point cloud.
+    ///
+    /// \param camera_location Normals are oriented with towards the
+    /// camera_location.
+    void OrientNormalsTowardsCameraLocation(
+            const core::Tensor &camera_location = core::Tensor::Zeros(
+                    {3}, core::Float32, core::Device("CPU:0")));
+
+    /// \brief Function to consistently orient estimated normals based on
+    /// consistent tangent planes as described in Hoppe et al., "Surface
+    /// Reconstruction from Unorganized Points", 1992.
+    ///
+    /// \param k k nearest neighbour for graph reconstruction for normal
+    /// propagation.
+    void OrientNormalsConsistentTangentPlane(size_t k);
 
     /// \brief Function to compute point color gradients. If radius is provided,
     /// then HybridSearch is used, otherwise KNN-Search is used.
@@ -622,6 +641,9 @@ public:
     /// Create an axis-aligned bounding box from attribute "positions".
     AxisAlignedBoundingBox GetAxisAlignedBoundingBox() const;
 
+    /// Create an oriented bounding box from attribute "positions".
+    OrientedBoundingBox GetOrientedBoundingBox() const;
+
     /// \brief Function to crop pointcloud into output pointcloud.
     ///
     /// \param aabb AxisAlignedBoundingBox to crop points.
@@ -629,6 +651,13 @@ public:
     /// the bounding box.
     PointCloud Crop(const AxisAlignedBoundingBox &aabb,
                     bool invert = false) const;
+
+    /// \brief Function to crop pointcloud into output pointcloud.
+    ///
+    /// \param obb OrientedBoundingBox to crop points.
+    /// \param invert Crop the points outside of the bounding box or inside of
+    /// the bounding box.
+    PointCloud Crop(const OrientedBoundingBox &obb, bool invert = false) const;
 
     /// Sweeps the point cloud rotationally about an axis.
     /// \param angle The rotation angle in degree.
@@ -652,6 +681,13 @@ public:
     LineSet ExtrudeLinear(const core::Tensor &vector,
                           double scale = 1.0,
                           bool capping = true) const;
+
+    /// Partition the point cloud by recursively doing PCA.
+    /// This function creates a new point attribute with the name
+    /// "partition_ids".
+    /// \param max_points The maximum allowed number of points in a partition.
+    /// \return The number of partitions.
+    int PCAPartition(int max_points);
 
 protected:
     core::Device device_ = core::Device("CPU:0");
