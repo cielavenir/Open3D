@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // -                        Open3D: www.open3d.org                            -
 // ----------------------------------------------------------------------------
-// Copyright (c) 2018-2023 www.open3d.org
+// Copyright (c) 2018-2024 www.open3d.org
 // SPDX-License-Identifier: MIT
 // ----------------------------------------------------------------------------
 
@@ -574,6 +574,16 @@ public:
     /// Note: Only support advanced indices are all next to each other.
     void IndexSet(const std::vector<Tensor>& index_tensors,
                   const Tensor& src_tensor);
+
+    /// \brief Advanced in-place reduction by index.
+    ///
+    /// See
+    /// https://pytorch.org/docs/stable/generated/torch.Tensor.index_add_.html
+    ///
+    /// self[index[i]] = operator(self[index[i]], src[i]).
+    ///
+    /// Note: Only support 1D index and src tensors now.
+    void IndexAdd_(int64_t dim, const Tensor& index, const Tensor& src);
 
     /// \brief Permute (dimension shuffle) the Tensor, returns a view.
     ///
@@ -1319,7 +1329,7 @@ protected:
 
     /// Underlying memory buffer for Tensor.
     std::shared_ptr<Blob> blob_ = nullptr;
-};  // namespace core
+};
 
 template <>
 inline Tensor::Tensor(const std::vector<bool>& init_vals,
@@ -1413,6 +1423,12 @@ inline Tensor operator*(T scalar_lhs, const Tensor& rhs) {
 template <typename T>
 inline Tensor operator/(T scalar_lhs, const Tensor& rhs) {
     return Tensor::Full({}, scalar_lhs, rhs.GetDtype(), rhs.GetDevice()) / rhs;
+}
+
+inline void AssertNotSYCL(const Tensor& tensor) {
+    if (tensor.GetDevice().IsSYCL()) {
+        utility::LogError("Not supported for SYCL device.");
+    }
 }
 
 }  // namespace core
